@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, Menu
 import sqlite3
+
 
 class App():
     def __init__(self):
@@ -21,32 +22,64 @@ class App():
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     balance REAL DEFAULT 0
                 )''')
-        self.cursor.execute("INSERT OR IGNORE INTO account (id, balance) VALUES (1, 0)")
+        self.cursor.execute(
+            "INSERT OR IGNORE INTO account (id, balance) VALUES (1, 0)")
         self.conn.commit()
 
         # Tworzenie głównego okna
         root = tk.Tk()
         root.title("Kontrola Finansów")
+        root.geometry("800x400")
+
+        menubar = Menu(root)
+        root.config(menu=menubar)
+
+        # File menu
+        file_menu = Menu(menubar, tearoff=False)
+
+        # Add category submenu
+        cat_menu = Menu(file_menu, tearoff=False)
+        cat_menu.add_command(label="Wydatek")
+        cat_menu.add_command(label="Dochód")
+
+        file_menu.add_cascade(label="Add category", menu=cat_menu)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=root.destroy)
+
+        # Help menu
+        def help_info():
+            tk.messagebox.showinfo("Help", "This is help")
+
+        help_menu = Menu(menubar, tearoff=False)
+        help_menu.add_command(
+            label="Help", command=help_info)
+
+        # Menubar
+        menubar.add_cascade(label="File", menu=file_menu)
+        menubar.add_cascade(label="Help", menu=help_menu)
 
         # Ramka dla dodawania transakcji
         add_frame = tk.Frame(root)
         add_frame.pack(pady=10)
 
         def category_range(selection):
-            if(selection == "Wydatek"):
+            if (selection == "Wydatek"):
                 self.cat_var.set("Jedzenie")
-                category_dropdown = tk.OptionMenu(add_frame, self.cat_var, "Jedzenie", "Rozrywka", "Edukacja")
+                category_dropdown = tk.OptionMenu(
+                    add_frame, self.cat_var, "Jedzenie", "Rozrywka", "Edukacja")
                 category_dropdown.grid(row=1, column=1, padx=5)
-            elif(selection == "Dochód"):
+            elif (selection == "Dochód"):
                 self.cat_var.set("Wypłata")
-                category_dropdown = tk.OptionMenu(add_frame, self.cat_var, "Wypłata", "Inne")
+                category_dropdown = tk.OptionMenu(
+                    add_frame, self.cat_var, "Wypłata", "Inne")
                 category_dropdown.grid(row=1, column=1, padx=5)
 
         type_label = tk.Label(add_frame, text="Typ:")
         type_label.grid(row=0, column=0, padx=5)
         self.type_var = tk.StringVar()
         self.type_var.set("Wybierz")
-        type_dropdown = tk.OptionMenu(add_frame, self.type_var, "Wydatek", "Dochód", command=category_range)
+        type_dropdown = tk.OptionMenu(
+            add_frame, self.type_var, "Wydatek", "Dochód", command=category_range)
         type_dropdown.grid(row=0, column=1, padx=5)
 
         category_label = tk.Label(add_frame, text="Kategoria:")
@@ -58,16 +91,19 @@ class App():
         self.amount_entry = tk.Entry(add_frame)
         self.amount_entry.grid(row=2, column=1, padx=5)
 
-        add_button = tk.Button(add_frame, text="Dodaj transakcję", command=self.add_transaction)
+        add_button = tk.Button(
+            add_frame, text="Dodaj transakcję", command=self.add_transaction)
         add_button.grid(row=4, column=0, columnspan=2, pady=10)
 
         show_frame = tk.Frame(root)
         show_frame.pack(pady=10)
 
-        show_transactions_button = tk.Button(show_frame, text="Wyświetl transakcje", command=self.show_transactions)
+        show_transactions_button = tk.Button(
+            show_frame, text="Wyświetl transakcje", command=self.show_transactions)
         show_transactions_button.grid(row=1, column=0, padx=5)
 
-        show_balance_button = tk.Button(show_frame, text="Wyświetl stan konta", command=self.show_balance)
+        show_balance_button = tk.Button(
+            show_frame, text="Wyświetl stan konta", command=self.show_balance)
         show_balance_button.grid(row=1, column=1, padx=5)
 
         self.status_label = tk.Label(root, text="", pady=10)
@@ -83,22 +119,24 @@ class App():
         transaction_type = self.type_var.get()
         self.cursor.execute("SELECT balance FROM account WHERE id = 1")
         balance = self.cursor.fetchone()[0]
-        
+
         if transaction_type.lower() == "wydatek" and amount > balance:
-            messagebox.showerror("Błąd", "Kwota wydatku przekracza stan konta!")
+            messagebox.showerror(
+                "Błąd", "Kwota wydatku przekracza stan konta!")
             return
-                
-            
+
         # Dodanie transakcji do bazy danych
-        self.cursor.execute("INSERT INTO transactions (category, amount, type) VALUES (?, ?, ?)", (category, amount, transaction_type))
-            
+        self.cursor.execute(
+            "INSERT INTO transactions (category, amount, type) VALUES (?, ?, ?)", (category, amount, transaction_type))
+
         # Aktualizacja stanu konta
         if transaction_type.lower() == 'wydatek':
             amount *= -1
-        self.cursor.execute("UPDATE account SET balance = balance + ?", (amount,))
-            
+        self.cursor.execute(
+            "UPDATE account SET balance = balance + ?", (amount,))
+
         self.conn.commit()
-            
+
         self.status_label.config(text="Transakcja została dodana.")
         self.cat_var.set("Wybierz")
         self.type_var.set("Wybierz")
@@ -107,7 +145,7 @@ class App():
     def show_transactions(self):
         self.cursor.execute("SELECT * FROM transactions")
         transactions = self.cursor.fetchall()
-            
+
         if transactions:
             transactions_text = ""
             for transaction in transactions:
@@ -115,7 +153,7 @@ class App():
             transactions_text = transactions_text.strip()
         else:
             transactions_text = "Brak transakcji."
-            
+
         self.status_label.config(text=transactions_text)
 
     def show_balance(self):
@@ -126,4 +164,3 @@ class App():
 
 
 app = App()
-
