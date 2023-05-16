@@ -47,12 +47,12 @@ class App():
 
         # Add category submenu
         cat_menu = Menu(file_menu, tearoff=False)
-        cat_menu.add_command(label="Wydatek")
-        cat_menu.add_command(label="Dochód")
+        cat_menu.add_command(label="Wydatek", command=lambda: self.add_category(cat_type='w'))
+        cat_menu.add_command(label="Dochód", command=lambda: self.add_category(cat_type='d'))
 
         # File menu config
-        file_menu.add_command(label="Truncate transactions", command=(
-            self.cursor.execute("DELETE FROM transactions")))
+        # file_menu.add_command(label="Truncate transactions", command=(
+        #     self.cursor.execute("DELETE FROM transactions")))
         file_menu.add_cascade(label="Add category", menu=cat_menu)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=root.destroy)
@@ -192,7 +192,7 @@ class App():
         if transactions:
             transactions_text = ""
             for transaction in transactions:
-                transactions_text += f"ID: {transaction[0]}, Kategoria: {transaction[1]}, Kwota: {transaction[2]}, Typ: {transaction[3]}\n"
+                transactions_text += f"Kategoria: {transaction[1]}, Kwota: {transaction[2]}, Typ: {transaction[3]}\n"
             transactions_text = transactions_text.strip()
         else:
             transactions_text = "Brak transakcji."
@@ -204,6 +204,34 @@ class App():
         balance = self.cursor.fetchone()[0]
         formatted_balance = "{:.2f}".format(balance)
         self.status_label.config(text=f"Stan konta: {formatted_balance}")
+
+    def add_category(self, cat_type):
+        add_cat_window = tk.Toplevel()
+        add_cat_window.title("Dodaj kategorię")
+        add_cat_window.geometry("400x100")
+
+        cat_frame = tk.Frame(add_cat_window)
+        cat_frame.pack(pady=10)
+
+        name_label = tk.Label(cat_frame, text="Nazwa")
+        name_label.grid(row=1, column=0, padx=5)
+        name_entry = tk.Entry(cat_frame)
+        name_entry.grid(row=1, column=1, padx=5)
+
+        def insert_category():
+            self.cursor.execute("INSERT INTO categories(name, type) VALUES (?, ?)", (name_entry.get(), cat_type))
+            self.conn.commit()
+            name_entry.delete(0, tk.END)
+            add_cat_window.destroy()
+
+        add_cat_button = tk.Button(
+            cat_frame, text="Dodaj", command=insert_category)
+        add_cat_button.grid(row=3, column=0, padx=5, pady=5, columnspan=2)
+
+        
+
+
+        
 
 
 app = App()
