@@ -36,7 +36,7 @@ class App():
 
         # Tworzenie głównego okna
         root = tk.Tk()
-        root.title("Kontrola Finansów")
+        root.title("Kontrola Finansów - Plutos Pecunia")
         root.geometry("800x400")
 
         menubar = Menu(root)
